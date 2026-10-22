@@ -1,55 +1,118 @@
 require('dotenv').config();
+
+const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
-// Schéma + modèle
-const Item = mongoose.models.Item || mongoose.model('Item', new mongoose.Schema({
-    name: { type: String, required: true, minlength: 2 },
-    description: String,
-    requestId: { type: String, unique: true, sparse: true }, // anti-doublon
-}, { timestamps: true }));
+app.use(cors({
+    origin(origin, callback) {
+        // Requests without an Origin header include curl and server-to-server calls.
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Origine CORS non autorisée'));
+    },
+}));
+app.use(express.json({ limit: '32kb' }));
 
-// Connexion à MongoDB avant les routes /api/items
-app.use('/api/items', async (req, res, next) => {
+const itemSchema = new mongoose.Schema({
+    name: { type: String, required: true, minlength: 2, trim: true },
+    description: { type: String, trim: true, default: '' },
+    // A client-generated key makes retries safe when both backends share this database.
+    requestId: { type: String, unique: true, sparse: true, trim: true },
+}, { timestamps: true });
+
+const Item = mongoose.models.Item || mongoose.model('Item', itemSchema);
+let connectionPromise;
+
+async function connectDatabase() {
+    if (mongoose.connection.readyState === 1) return;
+    if (!process.env.MONGODB_URI) {
+        throw new Error('MONGODB_URI is not configured');
+    }
+    if (!connectionPromise) {
+        connectionPromise = mongoose.connect(process.env.MONGODB_URI)
+            .catch((error) => {
+                connectionPromise = undefined;
+                throw error;
+            });
+    }
+    await connectionPromise;
+}
+
+app.get('/', (_req, res) => {
+    res.send('<h1 style="font-family:sans-serif;text-align:center;margin-top:20vh">Backend MERN Badr Nachid</h1>');
+});
+
+app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok', service: 'mern-badr-nachid' });
+});
+
+app.get('/api/items', async (_req, res) => {
     try {
-        if (mongoose.connection.readyState !== 1) await mongoose.connect(process.env.MONGODB_URI);
-        next();
-    } catch (e) {
+        await connectDatabase();
+        const items = await Item.find().sort({ createdAt: -1 }).lean();
+        res.json(items);
+    } catch (error) {
+        console.error('GET /api/items failed:', error.message);
         res.status(503).json({ error: 'Base de données indisponible' });
     }
 });
 
-// Page d'accueil du backend
-app.get('/', (req, res) => {
-    res.send('<h1 style="font-family:sans-serif;text-align:center;margin-top:20vh">Backend MERN Badr Nachid</h1>');
-});
-
-app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
-
-app.get('/api/items', async (req, res) => {
-    try { res.json(await Item.find().sort({ createdAt: -1 })); }
-    catch (e) { res.status(500).json({ error: 'Erreur serveur' }); }
-});
-
 app.post('/api/items', async (req, res) => {
-    const { name, description, requestId } = req.body || {};
-    if (!name || name.trim().length < 2)
-        return res.status(400).json({ error: 'Le champ name est requis (min 2 caractères)' });
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    const description = typeof req.body?.description === 'string' ? req.body.description.trim() : '';
+    const requestId = typeof req.body?.requestId === 'string' ? req.body.requestId.trim() : '';
+
+    if (name.length < 2 || name.length > 120) {
+        return res.status(400).json({ error: 'Le nom est requis (2 à 120 caractères).' });
+    }
+    if (description.length > 500) {
+        return res.status(400).json({ error: 'La description ne peut pas dépasser 500 caractères.' });
+    }
+    if (requestId.length > 100) {
+        return res.status(400).json({ error: 'Identifiant de requête invalide.' });
+    }
+
     try {
-        res.status(201).json(await Item.create({ name, description, requestId }));
-    } catch (e) {
-        if (e.code === 11000) return res.json(await Item.findOne({ requestId })); // retry
-        res.status(500).json({ error: 'Erreur serveur' });
+        await connectDatabase();
+        const item = await Item.create({ name, description, ...(requestId ? { requestId } : {}) });
+        return res.status(201).json(item);
+    } catch (error) {
+        if (error.code === 11000 && requestId) {
+            const existing = await Item.findOne({ requestId }).lean();
+            if (existing) return res.status(200).json(existing);
+        }
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ error: 'Les données de l’élément sont invalides.' });
+        }
+        console.error('POST /api/items failed:', error.message);
+        return res.status(503).json({ error: 'Base de données indisponible' });
     }
 });
 
-app.use((req, res) => res.status(404).json({ error: 'Route introuvable' }));
+app.use((error, _req, res, _next) => {
+    if (error.type === 'entity.parse.failed') {
+        return res.status(400).json({ error: 'JSON invalide.' });
+    }
+    if (error.message === 'Origine CORS non autorisée') {
+        return res.status(403).json({ error: error.message });
+    }
+    console.error('Request failed:', error.message);
+    return res.status(500).json({ error: 'Erreur serveur.' });
+});
 
-// Démarrage local / Railway
+app.use((_req, res) => res.status(404).json({ error: 'Route introuvable.' }));
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
+    app.listen(PORT, () => console.log(`API prête sur le port ${PORT}`));
+}
+
+module.exports = app;
