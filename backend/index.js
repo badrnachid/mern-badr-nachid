@@ -24,6 +24,11 @@ app.use('/api/items', async (req, res, next) => {
     }
 });
 
+// Page d'accueil du backend
+app.get('/', (req, res) => {
+    res.send('<h1 style="font-family:sans-serif;text-align:center;margin-top:20vh">Backend MERN Badr Nachid</h1>');
+});
+
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 app.get('/api/items', async (req, res) => {
@@ -48,15 +53,3 @@ app.use((req, res) => res.status(404).json({ error: 'Route introuvable' }));
 // Démarrage local / Railway
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
-    mongoose.connect(process.env.MONGODB_URI)
-        .then(() => {
-            console.log('MongoDB connecté');
-            app.listen(PORT, () => console.log('Serveur sur le port ' + PORT));
-        })
-        .catch((err) => {
-            console.error('Erreur MongoDB :', err.message);
-            process.exit(1);
-        });
-}
-
-module.exports = app; // nécessaire pour Vercel
