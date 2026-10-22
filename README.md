@@ -39,7 +39,7 @@ Le serveur écoute sur `PORT` ou `3000`. Pour le frontend local, servez `fronten
 | `NODE_ENV` | `development` ou `production` |
 | `CORS_ORIGINS` | Origines frontend autorisées, séparées par des virgules |
 
-Configurez ces variables séparément dans les projets Vercel et Railway. Utilisez la même base de test sur les deux backends pour conserver les mêmes données et assurer l'idempotence entre eux. N'affichez jamais les valeurs secrètes dans une démonstration.
+Configurez ces variables séparément dans les projets Vercel et Railway. Pour l'interface Vercel actuelle, la valeur de `CORS_ORIGINS` doit inclure `https://mern-badr-nachid-frontend-j5cx.vercel.app`. Utilisez la même base de test sur les deux backends pour conserver les mêmes données et assurer l'idempotence entre eux. N'affichez jamais les valeurs secrètes dans une démonstration.
 
 ## Routes API
 
@@ -61,6 +61,8 @@ Dans `frontend/config.js`, définissez :
 
 La fonction `apiFetch()` vérifie `response.ok`, applique un délai avec `AbortController` et essaie le backend secondaire après une erreur réseau, un délai dépassé ou une réponse HTTP 4xx/5xx. Si les deux tentatives échouent, l'interface affiche un message d'erreur.
 
+Tant que Railway n'est pas déployé, `config.js` pointe vers le seul backend disponible (Vercel) et laisse l'URL secondaire vide. Après le déploiement Railway, configurez Railway en `PRIMARY_API` et Vercel en `SECONDARY_API`.
+
 Pour vérifier la bascule :
 
 1. Avec les deux backends disponibles, vérifiez que la requête aboutit sur Railway.
@@ -78,7 +80,7 @@ Importez le dépôt GitHub dans Vercel, choisissez `frontend/` comme Root Direct
 
 ### Backend Vercel
 
-Importez le dépôt, choisissez `backend/` comme Root Directory et déployez avec `backend/vercel.json`. Dans les paramètres du projet, configurez `MONGODB_URI`, `NODE_ENV=production` et `CORS_ORIGINS`, puis vérifiez `/api/health` et `/api/items`.
+Importez le dépôt, choisissez `backend/` comme Root Directory et déployez avec `backend/vercel.json`. Dans **Settings → Environment Variables**, configurez `MONGODB_URI` (secret), `NODE_ENV=production` et `CORS_ORIGINS=https://mern-badr-nachid-frontend-j5cx.vercel.app`. Redéployez après avoir enregistré les variables, puis vérifiez `/api/health` et `/api/items`.
 
 ### Backend Railway
 
@@ -87,9 +89,12 @@ Créez un projet Railway depuis le dépôt avec `backend/` comme dossier racine.
 ## Liens de livraison
 
 - Dépôt GitHub : <https://github.com/badrnachid/mern-badr-nachid>
-- Frontend Vercel : à renseigner après déploiement
-- Backend Vercel (`/api/health`) : à renseigner après déploiement
+- Frontend Vercel : <https://mern-badr-nachid-frontend-j5cx.vercel.app/>
+- Backend Vercel : <https://mern-badr-nachid-vnmm.vercel.app/>
+- Backend Vercel health : <https://mern-badr-nachid-vnmm.vercel.app/api/health>
 - Backend Railway (`/api/health`) : à renseigner après déploiement
+
+Vérification effectuée le 22 octobre 2026 : la page d'accueil du backend Vercel et `/api/health` répondent. `/api/items` renvoie actuellement `503` tant que `MONGODB_URI` n'est pas opérationnelle dans les variables Vercel. Les requêtes du frontend doivent aussi être autorisées par `CORS_ORIGINS`.
 
 ## Git et secrets
 

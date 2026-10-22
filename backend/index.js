@@ -30,20 +30,27 @@ const itemSchema = new mongoose.Schema({
 
 const Item = mongoose.models.Item || mongoose.model('Item', itemSchema);
 let connectionPromise;
+let itemIndexPromise;
 
 async function connectDatabase() {
-    if (mongoose.connection.readyState === 1) return;
     if (!process.env.MONGODB_URI) {
         throw new Error('MONGODB_URI is not configured');
     }
-    if (!connectionPromise) {
+    if (mongoose.connection.readyState !== 1 && !connectionPromise) {
         connectionPromise = mongoose.connect(process.env.MONGODB_URI)
             .catch((error) => {
                 connectionPromise = undefined;
                 throw error;
             });
     }
-    await connectionPromise;
+    if (connectionPromise) await connectionPromise;
+    if (!itemIndexPromise) {
+        itemIndexPromise = Item.init().catch((error) => {
+            itemIndexPromise = undefined;
+            throw error;
+        });
+    }
+    await itemIndexPromise;
 }
 
 app.get('/', (_req, res) => {

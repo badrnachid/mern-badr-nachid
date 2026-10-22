@@ -1,6 +1,7 @@
 window.APP_CONFIG = {
-    // Replace these values with the deployed URLs before publishing frontend/.
-    PRIMARY_API: 'http://localhost:3000',
-    SECONDARY_API: 'http://localhost:3000',
+    // Vercel is the currently available backend. When Railway is deployed,
+    // make Railway primary and keep the Vercel URL as the fallback.
+    PRIMARY_API: 'https://mern-badr-nachid-vnmm.vercel.app',
+    SECONDARY_API: '',
     TIMEOUT_MS: 5000
 };

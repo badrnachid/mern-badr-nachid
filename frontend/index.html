@@ -1,21 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Badr Nachid - Frontend</title>
+    <meta name="theme-color" content="#f4f6f8">
+    <title>Badr Nachid - Frontend MERN</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        main { width: auto; max-width: none; }
-        h1 { white-space: nowrap; font-size: clamp(1.5rem, 4vw, 2.5rem); margin: 0; }
-    </style>
 </head>
-
 <body>
-    <main>
-        <h1>Badr Nachid - Frontend</h1>
-    </main>
-</body>
+    <main class="container">
+        <header class="page-header">
+            <p class="eyebrow">Application MERN</p>
+            <h1>Badr Nachid - Frontend</h1>
+            <p class="intro">Ajoutez un élément et retrouvez-le dans la liste.</p>
+        </header>
 
+        <section class="panel" aria-labelledby="form-title">
+            <h2 id="form-title">Nouvel élément</h2>
+            <form id="item-form">
+                <label for="name">Nom</label>
+                <input id="name" name="name" placeholder="Ex. Mon premier élément" required minlength="2" maxlength="120">
+                <label for="description">Description <span>(facultative)</span></label>
+                <textarea id="description" name="description" placeholder="Quelques détails..." maxlength="500" rows="3"></textarea>
+                <button id="submit-button" type="submit">Ajouter l’élément</button>
+            </form>
+        </section>
+
+        <p id="message" class="message" role="status" aria-live="polite"></p>
+
+        <section class="panel" aria-labelledby="items-title">
+            <div class="list-heading">
+                <h2 id="items-title">Éléments</h2>
+                <button id="refresh-button" class="secondary-button" type="button">Actualiser</button>
+            </div>
+            <p id="empty-state" class="empty-state">Chargement des éléments...</p>
+            <ul id="items" class="items-list" aria-live="polite"></ul>
+        </section>
+
+        <footer>Backend principal Railway · secours Vercel</footer>
+    </main>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
 </html>
