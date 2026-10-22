@@ -35,22 +35,25 @@ async function loadItems() {
     } catch (e) { msg.textContent = e.message; msg.className = 'error'; }
 }
 
-document.getElementById('item-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const body = {
-        name: document.getElementById('name').value,
-        description: document.getElementById('description').value,
-        requestId: crypto.randomUUID(),
-    };
-    try {
-        await apiFetch('/api/items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        e.target.reset();
-        loadItems();
-    } catch (err) { msg.textContent = err.message; msg.className = 'error'; }
-});
+const form = document.getElementById('item-form');
+if (form) {
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+            requestId: crypto.randomUUID(),
+        };
+        try {
+            await apiFetch('/api/items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            form.reset();
+            loadItems();
+        } catch (err) { msg.textContent = err.message; msg.className = 'error'; }
+    });
+}
 
 loadItems();

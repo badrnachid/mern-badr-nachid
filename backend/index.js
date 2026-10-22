@@ -49,8 +49,14 @@ app.use((req, res) => res.status(404).json({ error: 'Route introuvable' }));
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
     mongoose.connect(process.env.MONGODB_URI)
-        .then(() => app.listen(PORT, () => console.log('Serveur sur le port ' + PORT)))
-        .catch((err) => { console.error(err.message); process.exit(1); });
+        .then(() => {
+            console.log('MongoDB connecté');
+            app.listen(PORT, () => console.log('Serveur sur le port ' + PORT));
+        })
+        .catch((err) => {
+            console.error('Erreur MongoDB :', err.message);
+            process.exit(1);
+        });
 }
 
 module.exports = app; // nécessaire pour Vercel
