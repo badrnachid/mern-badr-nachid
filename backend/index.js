@@ -9,6 +9,11 @@ const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5500,http:
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+// Keep the deployed frontend allowed even if CORS_ORIGINS has not been set
+// in the Vercel dashboard yet.
+if (!allowedOrigins.includes('https://mern-badr-nachid-frontend-j5cx.vercel.app')) {
+    allowedOrigins.push('https://mern-badr-nachid-frontend-j5cx.vercel.app');
+}
 
 app.use(cors({
     origin(origin, callback) {
@@ -57,8 +62,14 @@ app.get('/', (_req, res) => {
     res.type('text/plain; charset=utf-8').send('Badr Nachid - Côté backend');
 });
 
-app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', service: 'mern-badr-nachid' });
+app.get('/api/health', async (_req, res) => {
+    try {
+        await connectDatabase();
+        return res.json({ status: 'ok', service: 'mern-badr-nachid', database: 'connected' });
+    } catch (error) {
+        console.error('GET /api/health failed:', error.message);
+        return res.status(503).json({ status: 'error', service: 'mern-badr-nachid', database: 'disconnected' });
+    }
 });
 
 app.get('/api/items', async (_req, res) => {
