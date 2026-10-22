@@ -47,7 +47,7 @@ async function connectDatabase() {
 }
 
 app.get('/', (_req, res) => {
-    res.send('<h1 style="font-family:sans-serif;text-align:center;margin-top:20vh">Backend MERN Badr Nachid</h1>');
+    res.type('text/plain; charset=utf-8').send('Badr Nachid - Côté backend');
 });
 
 app.get('/api/health', (_req, res) => {
