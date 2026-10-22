@@ -6,21 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Badr Nachid - Frontend</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        main { width: auto; max-width: none; }
+        h1 { white-space: nowrap; font-size: clamp(1.5rem, 4vw, 2.5rem); margin: 0; }
+    </style>
 </head>
 
 <body>
     <main>
         <h1>Badr Nachid - Frontend</h1>
-        <form id="item-form">
-            <input id="name" placeholder="Nom" required minlength="2">
-            <input id="description" placeholder="Description">
-            <button type="submit">Ajouter</button>
-        </form>
-        <p id="message" role="alert"></p>
-        <ul id="items"></ul>
     </main>
-    <script src="config.js"></script>
-    <script src="app.js"></script>
 </body>
 
 </html>
