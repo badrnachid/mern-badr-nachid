@@ -112,7 +112,15 @@ app.use((_req, res) => res.status(404).json({ error: 'Route introuvable.' }));
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
-    app.listen(PORT, () => console.log(`API prête sur le port ${PORT}`));
+    connectDatabase()
+        .then(() => {
+            console.log('MongoDB connected');
+            app.listen(PORT, () => console.log(`API prête sur le port ${PORT}`));
+        })
+        .catch((error) => {
+            console.error(`Connexion MongoDB échouée (${error.name}). Vérifiez MONGODB_URI et l'accès réseau Atlas.`);
+            process.exit(1);
+        });
 }
 
 module.exports = app;
